@@ -1,0 +1,19 @@
+.MapTableContainer{
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 10px;
+    background-color: #97b7d1;
+    padding: 10px;
+}
+
+.MapContainer{
+    display: grid;
+    size: 1200px;
+}
+
+
+.TableContainer{
+    align-items: right;
+    text-align: right;
+    display: inline;
+}

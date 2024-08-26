@@ -1,0 +1,23 @@
+
+.TopSection{
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 10px;
+    background-color: #97b7d1;
+    padding: 10px;
+}
+.Topheader{
+    text-align: left;
+    display: inline;
+}
+
+.TopTitle{
+    text-align: center;
+    display: inline;
+}
+
+.TopLogo{
+    align-items: right;
+    text-align: right;
+    display: inline;
+}
