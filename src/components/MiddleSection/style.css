@@ -1,4 +1,4 @@
-.MapTableContainer{
+.MapTableContainer {
     display: grid;
     grid-template-columns: auto auto;
     gap: 10px;
@@ -6,13 +6,28 @@
     padding: 10px;
 }
 
-.MapContainer{
-    display: grid;
-    size: 1200px;
+.Map-container {
+    height: 650px;
+    width: 1600px;
+}
+
+.Selectbox {
+    padding-top: 30px;
+    width: 450px;
+}
+
+.DotMarkers {
+    text-align: left;
+}
+
+.DotMarkers>h4 {
+    font-size: 12px;
+    color: black;
+    margin: 0.5em 0
 }
 
 
-.TableContainer{
+.TableContainer {
     align-items: right;
     text-align: right;
     display: inline;

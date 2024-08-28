@@ -13,7 +13,7 @@ function Title() {
         <div className="TopTitle">
             <h1>This is Title</h1>
             <GetDate />
-            <Data />
+            <Data  />
         </div>
     );
 }

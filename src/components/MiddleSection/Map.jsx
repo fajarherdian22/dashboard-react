@@ -3,7 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from "leaflet";
 import client from '../../services/client';
-import Select from 'react-select'
+import './style.css';
+import Select from 'react-select';
 
 const icon = L.icon({
   iconSize: [25, 41],
@@ -13,33 +14,29 @@ const icon = L.icon({
   shadowUrl: "https://unpkg.com/leaflet@1.6/dist/images/marker-shadow.png",
 });
 
-// const options = [
-//   { value: 'chocolate', label: 'Chocolate' },
-//   { value: 'strawberry', label: 'Strawberry' },
-//   { value: 'vanilla', label: 'Vanilla' }
-// ]
-
 function MapComponent() {
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [centralPos, setCentralPos] = useState([0, 0]);
+  const [cityFilter, setCityFilter] = useState(null);
+
+
+  const filterData = useFilterData();
+
+
+  const options = filterData.map((item) => ({
+    value: item.ran_site_city,
+    label: item.ran_site_city
+  }));
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch main data
-        const mainResponse = await client.get('data/city?date=2024-08-22&city=CIAMIS');
+        const mainResponse = await client.get(`data/city?date=2024-08-22&city=CIAMIS`);
         const fetchedData = mainResponse.data.data;
         setData(fetchedData);
 
-        // Fetch filtered data
-        const filterResponse = await client.get('data/filter');
-        const filtered = filterResponse.data.data;
-        setFilteredData(filtered);
-
-        // Calculate central position
         let sumLat = 0, sumLon = 0;
         fetchedData.forEach(coord => {
           sumLat += coord.ran_site_latitude;
@@ -55,42 +52,84 @@ function MapComponent() {
         setLoading(false);
       }
     };
-
     fetchData();
+
   }, []);
 
   if (loading) return <p>Loading map...</p>;
   if (error) return <p>Error: {error}</p>;
 
   return (
-    <MapContainer
-      center={centralPos}
-      zoom={10}
-      scrollWheelZoom={false}
-      style={{ height: "650px", width: "1600px" }}
-    >
-      <TileLayer
-        // attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <div>
+      <MapContainer
+        className="Map-container"
+        center={centralPos}
+        zoom={10}
+        scrollWheelZoom={false}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <DotMarkers data={data} />
+      </MapContainer>
+      <Select
+        options={options}
+        value={cityFilter}
+        isSearchable={true}
+        onChange={(option) => setCityFilter(option)}
       />
-      <MultipleMarkers data={data} />
-
-    </MapContainer>
+    </div>
   );
-
 }
 
-function MultipleMarkers({ data }) {
+
+
+// function getData(params) {
+//   const [data, setData] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [centralPos, setCentralPos] = useState([0, 0]);
+//   const [cityFilter, setCityFilter] = useState(null);
+
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         const filteredResponse = await client.get(`data/city?date=2024-08-22&city=${cityFilter.value}`);
+//         const filtered = filteredResponse.data.data;
+//         setFilteredData(filtered);
+//       } catch (err) {
+//         console.log(err.message);
+//       }
+//     };
+//     fetchData();
+//   }, []);
+//   return filteredData;
+// }
+
+function useFilterData() {
+  const [filteredData, setFilteredData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const filteredResponse = await client.get('data/filter');
+        const filtered = filteredResponse.data.data;
+        setFilteredData(filtered);
+      } catch (err) {
+        console.log(err.message);
+      }
+    };
+    fetchData();
+  }, []);
+  return filteredData;
+}
+
+function DotMarkers({ data }) {
   return data.map((coord, index) => (
     <Marker key={index} position={[coord.ran_site_latitude, coord.ran_site_longitude]} icon={icon}>
       <Popup>
-        <div style={{ textAlign: 'left' }}>
-          <h4 style={{ fontSize: '20px', color: "blue", margin: "0.5em 0" }}>Moentity: {coord.moentity}</h4>
-          <h4 style={{ fontSize: '20px', color: "blue", margin: "0.5em 0" }}>Traffic: {parseFloat(coord.traffic).toFixed(2)}</h4>
+        <div className="DotMarkers">
+          <h4>Moentity: {coord.moentity}</h4>
+          <h4>Traffic: {parseFloat(coord.traffic).toFixed(2)}</h4>
         </div>
       </Popup>
-    </Marker >
-
+    </Marker>
   ));
 }
 

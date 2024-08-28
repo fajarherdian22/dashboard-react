@@ -8,10 +8,10 @@ const GetReq = (url, payload) => {
 
     useEffect(() => {
         let isMounted = true;
-        const fetchData = async () =>{
+        const fetchData = async () => {
             try {
                 const res = await client.get(url, payload);
-                console.log(payload);
+                // console.log(payload);
                 if (isMounted) {
                     setData(res.data.data)
                 }
@@ -29,7 +29,7 @@ const GetReq = (url, payload) => {
         };
     }, [url, payload]);
 
-    return {data, loading, error};
+    return { data, loading, error };
 };
 
 export default GetReq;
