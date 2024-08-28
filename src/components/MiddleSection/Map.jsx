@@ -6,6 +6,7 @@ import client from '../../services/client';
 import './style.css';
 import Select from 'react-select';
 
+// Define the icon for markers
 const icon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [10, 41],
@@ -15,49 +16,39 @@ const icon = L.icon({
 });
 
 function MapComponent() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [centralPos, setCentralPos] = useState([0, 0]);
+  const [centralPos, setCentralPos] = useState([-6.2563, 106.8145]);
+  const filteredData = useFilterData();
   const [cityFilter, setCityFilter] = useState(null);
+  const data = useGetData(cityFilter);
+
+  // const DefaultFilt = filteredData[0]
 
 
-  const filterData = useFilterData();
-
-
-  const options = filterData.map((item) => ({
-    value: item.ran_site_city,
-    label: item.ran_site_city
-  }));
+  // Update central position based on fetched data
+  useEffect(() => {
+    if (filteredData.length > 0 && !cityFilter) {
+      setCityFilter({ value: filteredData[0].ran_site_city, label: filteredData[0].ran_site_city });
+    }
+  }, [filteredData, cityFilter]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const mainResponse = await client.get(`data/city?date=2024-08-22&city=CIAMIS`);
-        const fetchedData = mainResponse.data.data;
-        setData(fetchedData);
+    if (data.length > 0) {
+      const sumLat = data.reduce((sum, coord) => sum + coord.ran_site_latitude, 0);
+      const sumLon = data.reduce((sum, coord) => sum + coord.ran_site_longitude, 0);
+      const avgLat = sumLat / data.length;
+      const avgLon = sumLon / data.length;
+      setCentralPos([avgLat, avgLon]);
+    }
+  }, [data]);
 
-        let sumLat = 0, sumLon = 0;
-        fetchedData.forEach(coord => {
-          sumLat += coord.ran_site_latitude;
-          sumLon += coord.ran_site_longitude;
-        });
-        const avgLat = sumLat / fetchedData.length;
-        const avgLon = sumLon / fetchedData.length;
-        setCentralPos([avgLat, avgLon]);
 
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const options = filteredData.map((item) => ({
+    value: item.ran_site_city,
+    label: item.ran_site_city,
+  }));
 
-  }, []);
+  console.log(centralPos);
 
-  if (loading) return <p>Loading map...</p>;
-  if (error) return <p>Error: {error}</p>;
 
   return (
     <div>
@@ -65,61 +56,62 @@ function MapComponent() {
         className="Map-container"
         center={centralPos}
         zoom={10}
-        scrollWheelZoom={false}>
+        scrollWheelZoom={false}
+      >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <DotMarkers data={data} />
       </MapContainer>
       <Select
+        className="Selectbox"
         options={options}
         value={cityFilter}
         isSearchable={true}
-        onChange={(option) => setCityFilter(option)}
+        onChange={(options) => setCityFilter(options)}
       />
     </div>
   );
 }
 
+function useGetData(city) {
+  const [data, setData] = useState([]);
 
-
-// function getData(params) {
-//   const [data, setData] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [centralPos, setCentralPos] = useState([0, 0]);
-//   const [cityFilter, setCityFilter] = useState(null);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const filteredResponse = await client.get(`data/city?date=2024-08-22&city=${cityFilter.value}`);
-//         const filtered = filteredResponse.data.data;
-//         setFilteredData(filtered);
-//       } catch (err) {
-//         console.log(err.message);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-//   return filteredData;
-// }
-
-function useFilterData() {
-  const [filteredData, setFilteredData] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filteredResponse = await client.get('data/filter');
-        const filtered = filteredResponse.data.data;
-        setFilteredData(filtered);
+        if (city) {
+          const response = await client.get(`data/city?date=2024-08-22&city=${city.value}`);
+          setData(response.data.data);
+        }
+      } catch (err) {
+        console.log(err.message);
+      }
+    };
+    fetchData();
+  }, [city]);
+
+  return data;
+}
+
+// Custom hook for fetching filter data
+function useFilterData() {
+  const [filteredData, setFilteredData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await client.get('data/filter');
+        setFilteredData(response.data.data);
       } catch (err) {
         console.log(err.message);
       }
     };
     fetchData();
   }, []);
+
   return filteredData;
 }
 
+// Component to render map markers
 function DotMarkers({ data }) {
   return data.map((coord, index) => (
     <Marker key={index} position={[coord.ran_site_latitude, coord.ran_site_longitude]} icon={icon}>
